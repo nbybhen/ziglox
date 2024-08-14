@@ -1,7 +1,17 @@
 const std = @import("std");
+const chunk = @import("chunk.zig").Chunk;
+const opcode = @import("chunk.zig").OpCode;
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
+    var tmp = chunk.init();
 
-    std.debug.print("Hello World!.\n", .{});
+    defer tmp.free();
+
+    const constant = try tmp.addConstant(1.2);
+    try tmp.write(@intFromEnum(opcode.OP_CONSTANT), 123);
+    try tmp.write(@intCast(constant), 123);
+
+    try tmp.write(@intFromEnum(opcode.OP_RETURN), 123);
+
+    try tmp.disassemble("test");
 }
