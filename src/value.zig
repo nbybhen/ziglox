@@ -15,7 +15,7 @@ pub const ValueArray = struct {
         try self.values.append(value);
     }
 
-    pub fn free(self: *ValueArray) !void {
+    pub fn free(self: *ValueArray) void {
         self.values.deinit();
     }
 
