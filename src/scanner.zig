@@ -1,34 +1,35 @@
+const std = @import("std");
+
 pub const Scanner = struct {
     start: [*]u8,
     current: [*]u8,
     line: usize,
 
-    pub fn init(source: []u8) Scanner{
-        return Scanner{.start = source.ptr, .current = source.ptr, .line = 1};
+    pub fn init(source: []u8) Scanner {
+        return Scanner{ .start = source.ptr, .current = source.ptr, .line = 1 };
     }
 
-    pub fn skipWhitespace(self: *Scanner) void{
+    pub fn skipWhitespace(self: *Scanner) void {
         while (true) {
             _ = switch (self.peek()) {
                 ' ', '\r', '\t' => self.advance(),
                 '\n' => {
-                    self.line +=1;
+                    self.line += 1;
                     _ = self.advance();
                 },
                 '/' => {
                     if (self.peekNext() == '/') {
                         while (self.peek() != '\n' and !self.isAtEnd()) _ = self.advance();
-                    }
-                    else {
+                    } else {
                         return;
                     }
                 },
-                else => return
+                else => return,
             };
         }
     }
 
-    pub fn scanToken(self: *Scanner) Token{
+    pub fn scanToken(self: *Scanner) Token {
         self.skipWhitespace();
         self.start = self.current;
 
@@ -58,18 +59,18 @@ pub const Scanner = struct {
                 if (isAlpha(c)) {
                     return self.identifier();
                 }
-            }
+            },
         }
 
         return self.errorToken("Unexpected character.");
     }
 
-    fn identifier(self: *Scanner) Token{
+    fn identifier(self: *Scanner) Token {
         while (isAlpha(self.peek()) and isDigit(self.peek())) _ = self.advance();
         return self.makeToken(self.identifierType());
     }
 
-    fn identifierType(self: Scanner) TokenType{
+    fn identifierType(self: Scanner) TokenType {
         return switch (self.start[0]) {
             'a' => self.checkKeyword(1, 2, "nd", .kand),
             'c' => self.checkKeyword(1, 4, "lass", .class),
@@ -83,35 +84,33 @@ pub const Scanner = struct {
             'v' => self.checkKeyword(1, 2, "ar", .kvar),
             'w' => self.checkKeyword(1, 4, "hile", .kwhile),
             'f' => {
-                if (self.current[0] - self.start[0] > 1) {
+                if (@intFromPtr(self.current) - @intFromPtr(self.start) > 1) {
                     return switch (self.start[1]) {
                         'a' => self.checkKeyword(2, 3, "lse", .kfalse),
                         'o' => self.checkKeyword(2, 1, "r", .kfor),
                         'u' => self.checkKeyword(2, 1, "n", .fun),
-                        else => .identifier
+                        else => .identifier,
                     };
-                }
-                else {
+                } else {
                     return .identifier;
                 }
             },
             't' => {
-                if(self.current[0] - self.start[0] > 1) {
+                if (@intFromPtr(self.current) - @intFromPtr(self.start) > 1) {
                     return switch (self.start[1]) {
                         'h' => self.checkKeyword(2, 2, "is", .this),
                         'r' => self.checkKeyword(2, 2, "ue", .ktrue),
-                        else => .identifier
+                        else => .identifier,
                     };
-                }
-                else {
+                } else {
                     return .identifier;
                 }
             },
-            else => .identifier
+            else => .identifier,
         };
     }
 
-    fn checkKeyword(self: Scanner, start: usize, len: usize, _: []const u8, t: TokenType) TokenType{
+    fn checkKeyword(self: Scanner, start: usize, len: usize, _: []const u8, t: TokenType) TokenType {
         //const tmp = [1]u8{self.current[0]};
         if (@intFromPtr(self.current) - @intFromPtr(self.start) == start + len) {
             return t;
@@ -120,7 +119,7 @@ pub const Scanner = struct {
         return .identifier;
     }
 
-    fn number(self: *Scanner) Token{
+    fn number(self: *Scanner) Token {
         while (isDigit(self.peek())) _ = self.advance();
 
         // Looks for fractional part.
@@ -134,9 +133,9 @@ pub const Scanner = struct {
         return self.makeToken(.number);
     }
 
-    fn string(self: *Scanner) Token{
+    fn string(self: *Scanner) Token {
         while (self.peek() != '"' and !self.isAtEnd()) {
-            if(self.peek() == '\n') self.line += 1;
+            if (self.peek() == '\n') self.line += 1;
             _ = self.advance();
         }
 
@@ -147,16 +146,11 @@ pub const Scanner = struct {
         return self.makeToken(.string);
     }
 
-    fn makeToken(self: Scanner, t: TokenType) Token{
-        return Token{
-            .start = self.start,
-            .type = t,
-            .len = (@intFromPtr(self.current) - @intFromPtr(self.start)),
-            .line = self.line
-        };
+    fn makeToken(self: Scanner, t: TokenType) Token {
+        return Token{ .start = self.start, .type = t, .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), .line = self.line };
     }
 
-    fn errorToken(self: Scanner, msg: []const u8) Token{
+    fn errorToken(self: Scanner, msg: []const u8) Token {
         return Token{
             .type = .kerror,
             .start = msg.ptr,
@@ -169,45 +163,44 @@ pub const Scanner = struct {
     // Helper Functions
     //
 
-    fn isDigit(c: u8) bool{
+    fn isDigit(c: u8) bool {
         return switch (c) {
             '0'...'9' => true,
-            else => false
+            else => false,
         };
     }
 
-    fn isAlpha(c: u8) bool{
+    fn isAlpha(c: u8) bool {
         return switch (c) {
             'a'...'z', 'A'...'Z', '_' => true,
-            else => false
+            else => false,
         };
     }
 
     fn advance(self: *Scanner) u8 {
-        self.current+=1;
+        self.current += 1;
         return (self.current - 1)[0];
     }
 
-    fn peekNext(self: *Scanner) u8{
-        if(self.isAtEnd()) return '\x00';
+    fn peekNext(self: *Scanner) u8 {
+        if (self.isAtEnd()) return '\x00';
         return self.current[0];
     }
 
-    fn isAtEnd(self: Scanner) bool{
+    fn isAtEnd(self: Scanner) bool {
         return self.current[0] == '\x00';
     }
 
-    fn match(self: *Scanner, expected: u8) bool{
+    fn match(self: *Scanner, expected: u8) bool {
         if (self.isAtEnd()) return false;
         if (self.current[0] != expected) return false;
-        self.current+=1;
+        self.current += 1;
         return true;
     }
 
-    fn peek(self: Scanner) u8{
+    fn peek(self: Scanner) u8 {
         return self.current[0];
     }
-
 };
 
 pub const Token = struct {
@@ -219,18 +212,51 @@ pub const Token = struct {
 
 pub const TokenType = enum {
     // SC Tokens
-    left_paren, right_paren, left_brace, right_brace, comma, dot, minus, plus,
-    semicolon, slash, star,
+    left_paren,
+    right_paren,
+    left_brace,
+    right_brace,
+    comma,
+    dot,
+    minus,
+    plus,
+    semicolon,
+    slash,
+    star,
 
     // One or two char tokens
-    bang, bang_equal, equal, equal_equal, greater, greater_equal, less, less_equal,
+    bang,
+    bang_equal,
+    equal,
+    equal_equal,
+    greater,
+    greater_equal,
+    less,
+    less_equal,
 
     // Literals
-    identifier, string, number,
+    identifier,
+    string,
+    number,
 
     // Keywords (k-[name] if keyword exists)
-    kand, class, kelse, kfalse, kfor, fun, kif, nil, kor, print, kreturn, super, this,
-    ktrue, kvar, kwhile,
+    kand,
+    class,
+    kelse,
+    kfalse,
+    kfor,
+    fun,
+    kif,
+    nil,
+    kor,
+    print,
+    kreturn,
+    super,
+    this,
+    ktrue,
+    kvar,
+    kwhile,
 
-    kerror, eof
+    kerror,
+    eof,
 };

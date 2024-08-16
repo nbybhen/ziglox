@@ -8,10 +8,6 @@ const VM = @import("vm.zig").VM;
 const allocator = std.heap.page_allocator;
 const DELIMITER = if (builtin.os.tag == .windows) '\r' else '\n';
 
-fn interpret(source: []u8) Error!void{
-    std.debug.print("Source: {s}\n", .{source});
-}
-
 const Error = InterpretResult || std.fs.File.WriteError;
 
 fn repl() Error!void {
@@ -41,7 +37,20 @@ fn repl() Error!void {
             break;
         }
 
-        try interpret(input.items);
+        var vm = VM.init();
+        defer vm.free();
+
+        _ = vm.interpret(input.items) catch |e| switch(e) {
+            error.CompileErr => {
+                std.debug.print("COMPILE_ERR\n", .{});
+                std.process.exit(65);
+            },
+            error.RuntimeErr => {
+                std.debug.print("RUNTIME_ERR\n", .{});
+                std.process.exit(70);
+            },
+            else => unreachable,
+        };
     }
 }
 
@@ -59,6 +68,7 @@ fn runFile(path: []u8) !void {
     _ = try handle.readAll(&buffer);
 
     var vm = VM.init();
+    defer vm.free();
 
     _ = vm.interpret(&buffer) catch |e| switch(e) {
         error.CompileErr => {
