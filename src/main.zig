@@ -18,13 +18,11 @@ fn repl() Error!void {
         var input = std.ArrayList(u8).init(allocator);
         defer input.deinit();
 
-        try stdout.writeAll(
-            "> "
-        );
+        try stdout.writeAll("> ");
 
         stdin.reader().streamUntilDelimiter(input.writer(), DELIMITER, null) catch |e| switch (e) {
-                    error.EndOfStream => break,
-                    else => unreachable,
+            error.EndOfStream => break,
+            else => unreachable,
         };
 
         const line = if (builtin.os.tag == .windows)
@@ -40,7 +38,7 @@ fn repl() Error!void {
         var vm = VM.init();
         defer vm.free();
 
-        _ = vm.interpret(input.items) catch |e| switch(e) {
+        _ = vm.interpret(input.items) catch |e| switch (e) {
             error.CompileErr => {
                 std.debug.print("COMPILE_ERR\n", .{});
                 std.process.exit(65);
@@ -55,22 +53,24 @@ fn repl() Error!void {
 }
 
 fn runFile(path: []u8) !void {
-    const handle = std.fs.cwd().openFile(path, .{}) catch |e| switch (e) {
+    const file = std.fs.cwd().openFile(path, .{}) catch |e| switch (e) {
         error.FileNotFound => {
             std.debug.print("Error: Could not open file {s}.\n", .{path});
             std.process.exit(74);
         },
-        else => unreachable
+        else => unreachable,
     };
-    defer handle.close();
+    defer file.close();
 
-    var buffer: [64]u8 = undefined;
-    _ = try handle.readAll(&buffer);
+    const size = (try file.stat()).size;
+    const buffer = try allocator.alloc(u8, size);
+
+    _ = try file.readAll(buffer);
 
     var vm = VM.init();
     defer vm.free();
 
-    _ = vm.interpret(&buffer) catch |e| switch(e) {
+    _ = vm.interpret(buffer) catch |e| switch (e) {
         error.CompileErr => {
             std.debug.print("COMPILE_ERR\n", .{});
             std.process.exit(65);

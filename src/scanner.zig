@@ -37,33 +37,33 @@ pub const Scanner = struct {
 
         const c = self.advance();
 
-        switch (c) {
-            '(' => return self.makeToken(.left_paren),
-            ')' => return self.makeToken(.right_paren),
-            '{' => return self.makeToken(.left_brace),
-            '}' => return self.makeToken(.right_brace),
-            ';' => return self.makeToken(.semicolon),
-            ',' => return self.makeToken(.comma),
-            '.' => return self.makeToken(.dot),
-            '-' => return self.makeToken(.slash),
-            '+' => return self.makeToken(.plus),
-            '/' => return self.makeToken(.slash),
-            '*' => return self.makeToken(.star),
-            '!' => return self.makeToken(if (self.match('=')) .bang_equal else .bang),
-            '=' => return self.makeToken(if (self.match('=')) .equal_equal else .equal),
-            '<' => return self.makeToken(if (self.match('=')) .less_equal else .less),
-            '>' => return self.makeToken(if (self.match('=')) .greater_equal else .greater),
-            '"' => return self.string(),
-            '0'...'9' => return self.number(),
+        return switch (c) {
+            '(' => self.makeToken(.left_paren),
+            ')' => self.makeToken(.right_paren),
+            '{' => self.makeToken(.left_brace),
+            '}' => self.makeToken(.right_brace),
+            ';' => self.makeToken(.semicolon),
+            ',' => self.makeToken(.comma),
+            '.' => self.makeToken(.dot),
+            '-' => self.makeToken(.slash),
+            '+' => self.makeToken(.plus),
+            '/' => self.makeToken(.slash),
+            '*' => self.makeToken(.star),
+            '!' => self.makeToken(if (self.match('=')) .bang_equal else .bang),
+            '=' => self.makeToken(if (self.match('=')) .equal_equal else .equal),
+            '<' => self.makeToken(if (self.match('=')) .less_equal else .less),
+            '>' => self.makeToken(if (self.match('=')) .greater_equal else .greater),
+            '"' => self.string(),
+            '0'...'9' => self.number(),
             else => {
                 if (isAlpha(c)) {
                     return self.identifier();
                 }
-            },
-        }
 
-        std.debug.print("Unexpected char: {c}", .{c});
-        return self.errorToken("Unexpected character.");
+                std.debug.print("Unexpected char: {c}", .{c});
+                return self.errorToken("Unexpected character.");
+            },
+        };
     }
 
     fn identifier(self: *Scanner) Token {
@@ -111,10 +111,9 @@ pub const Scanner = struct {
         };
     }
 
-    fn checkKeyword(self: Scanner, start: usize, len: usize, _: []const u8, t: TokenType) TokenType {
-        //const tmp = [1]u8{self.current[0]};
-        if (@intFromPtr(self.current) - @intFromPtr(self.start) == start + len) {
-            return t; 
+    fn checkKeyword(self: Scanner, start: usize, len: usize, rest: []const u8, t: TokenType) TokenType {
+        if (@intFromPtr(self.current) - @intFromPtr(self.start) == start + len and std.mem.eql(u8, self.start[start..len], rest)) {
+            return t;
         }
 
         return .identifier;
@@ -148,12 +147,7 @@ pub const Scanner = struct {
     }
 
     fn makeToken(self: Scanner, t: TokenType) Token {
-        return Token{ 
-            .start = self.start, 
-            .type = t, 
-            .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), 
-            .line = self.line 
-        };
+        return Token{ .start = self.start, .type = t, .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), .line = self.line };
     }
 
     fn errorToken(self: Scanner, msg: []const u8) Token {
