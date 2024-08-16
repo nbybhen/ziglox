@@ -2,6 +2,9 @@ const std = @import("std");
 const Chunk = @import("chunk.zig").Chunk;
 const OpCode = @import("chunk.zig").OpCode;
 const Value = @import("value.zig").Value;
+const Compiler = @import("compiler.zig");
+
+const Error = InterpretResult || std.fs.File.WriteError;
 
 pub const InterpretResult = error{
     CompileErr,
@@ -25,10 +28,15 @@ pub const VM = struct {
         };
     }
 
-    pub fn interpret(self: *VM, chunk: Chunk) !void {
-        self.chunk = chunk;
-        self.ip = chunk.code.items.ptr;
-        try self.run();
+    // pub fn interpret(self: *VM, chunk: Chunk) !void {
+    //     self.chunk = chunk;
+    //     self.ip = chunk.code.items.ptr;
+    //     try self.run();
+    // }
+    //
+    pub fn interpret(_: *VM, source: []u8) Error!void{
+        std.debug.print("Source: {s}\n", .{source});
+        Compiler.compile(source);
     }
 
     pub fn free(self: *VM) void {
@@ -37,7 +45,7 @@ pub const VM = struct {
 
     pub fn run(self: *VM) !void {
         while (true) {
-            if (false) {
+            if (true) {
                 for (self.stack.items) |value| {
                     std.debug.print("[{d}]\n", .{value});
                 }
