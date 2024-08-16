@@ -101,27 +101,4 @@ pub fn main() !void {
             std.process.exit(64);
         },
     };
-
-    // std.debug.print("Arguments: {s}", .{args});
-
-    // var constant = try chunk.addConstant(1.2);
-    // try chunk.writeOp(.op_constant, 123);
-    // try chunk.write(constant, 123);
-
-    // constant = try chunk.addConstant(3.4);
-    // try chunk.writeOp(.op_constant, 123);
-    // try chunk.write(constant, 123);
-
-    // try chunk.writeOp(.op_add, 123);
-
-    // constant = try chunk.addConstant(5.6);
-    // try chunk.writeOp(.op_constant, 123);
-    // try chunk.write(constant, 123);
-
-    // try chunk.writeOp(.op_div, 123);
-    // try chunk.writeOp(.op_negate, 123);
-    // try chunk.writeOp(.op_return, 123);
-
-    // chunk.disassemble("test");
-    // try vm.interpret(chunk);
 }

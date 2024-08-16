@@ -13,8 +13,8 @@ pub fn compile(source: []u8) void {
         } else {
             std.debug.print("   | ", .{});
         }
-        std.debug.print("Type: {any}, Len: {d}, Start: {any}\n", .{ token.type, token.len, @intFromPtr(token.start) });
+        std.debug.print("Type: {any}, Len: {d}\n", .{ token.type, token.len });
 
-        if (token.type == .eof or token.type == .kerror) break;
+        if (token.type == .eof) break;
     }
 }

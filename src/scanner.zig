@@ -62,6 +62,7 @@ pub const Scanner = struct {
             },
         }
 
+        std.debug.print("Unexpected char: {c}", .{c});
         return self.errorToken("Unexpected character.");
     }
 
@@ -113,7 +114,7 @@ pub const Scanner = struct {
     fn checkKeyword(self: Scanner, start: usize, len: usize, _: []const u8, t: TokenType) TokenType {
         //const tmp = [1]u8{self.current[0]};
         if (@intFromPtr(self.current) - @intFromPtr(self.start) == start + len) {
-            return t;
+            return t; 
         }
 
         return .identifier;
@@ -147,7 +148,12 @@ pub const Scanner = struct {
     }
 
     fn makeToken(self: Scanner, t: TokenType) Token {
-        return Token{ .start = self.start, .type = t, .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), .line = self.line };
+        return Token{ 
+            .start = self.start, 
+            .type = t, 
+            .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), 
+            .line = self.line 
+        };
     }
 
     fn errorToken(self: Scanner, msg: []const u8) Token {
