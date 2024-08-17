@@ -8,16 +8,16 @@ const VM = @import("vm.zig").VM;
 const allocator = std.heap.page_allocator;
 const DELIMITER = if (builtin.os.tag == .windows) '\r' else '\n';
 
-const Error = InterpretResult || std.fs.File.WriteError;
+const Error = InterpretResult || std.fs.File.WriteError || std.mem.Allocator.Error;
 
 fn repl() Error!void {
     const stdout = std.io.getStdOut();
     const stdin = std.io.getStdIn();
+    var input = try std.ArrayList(u8).initCapacity(allocator, 1);
+    defer input.deinit();
 
     while (true) {
-        var input = std.ArrayList(u8).init(allocator);
-        defer input.deinit();
-
+        input.clearRetainingCapacity();
         try stdout.writeAll("> ");
 
         stdin.reader().streamUntilDelimiter(input.writer(), DELIMITER, null) catch |e| switch (e) {
