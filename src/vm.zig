@@ -2,7 +2,8 @@ const std = @import("std");
 const Chunk = @import("chunk.zig").Chunk;
 const OpCode = @import("chunk.zig").OpCode;
 const Value = @import("value.zig").Value;
-const Compiler = @import("compiler.zig");
+const Compiler = @import("compiler.zig").Compiler;
+const Scanner = @import("scanner.zig").Scanner;
 
 const Error = InterpretResult || std.fs.File.WriteError;
 
@@ -28,15 +29,24 @@ pub const VM = struct {
         };
     }
 
-    // pub fn interpret(self: *VM, chunk: Chunk) !void {
-    //     self.chunk = chunk;
-    //     self.ip = chunk.code.items.ptr;
-    //     try self.run();
-    // }
-    //
-    pub fn interpret(_: *VM, source: []u8) Error!void{
+    pub fn interpret(self: *VM, source: []u8) !void {
         std.debug.print("Source: {s}\n", .{source});
-        Compiler.compile(source);
+
+        var chunk = Chunk.init();
+        defer chunk.free();
+
+        var scanner = Scanner.init(source);
+
+        var compiler = Compiler.init(&scanner);
+        compiler.compile(&chunk) catch |err| {
+            std.debug.print("Error: {any}\n", .{err});
+            return InterpretResult.CompileErr;
+        };
+
+        self.chunk = chunk;
+        self.ip = chunk.code.items.ptr;
+
+        _ = try self.run();
     }
 
     pub fn free(self: *VM) void {

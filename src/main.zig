@@ -10,7 +10,7 @@ const DELIMITER = if (builtin.os.tag == .windows) '\r' else '\n';
 
 const Error = InterpretResult || std.fs.File.WriteError || std.mem.Allocator.Error;
 
-fn repl() Error!void {
+fn repl(vm: *VM) !void {
     const stdout = std.io.getStdOut();
     const stdin = std.io.getStdIn();
     var input = try std.ArrayList(u8).initCapacity(allocator, 1);
@@ -31,12 +31,7 @@ fn repl() Error!void {
             input;
 
         // Quits REPL
-        if (std.mem.eql(u8, line.items, ":q")) {
-            break;
-        }
-
-        var vm = VM.init();
-        defer vm.free();
+        if (std.mem.eql(u8, line.items, ":q")) break;
 
         _ = vm.interpret(input.items) catch |e| switch (e) {
             error.CompileErr => {
@@ -94,7 +89,7 @@ pub fn main() !void {
     defer std.process.argsFree(allocator, args);
 
     try switch (args.len) {
-        1 => repl(),
+        1 => repl(&vm),
         2 => runFile(args[1]),
         else => {
             std.debug.print("Usage: zlox [path]\n", .{});
