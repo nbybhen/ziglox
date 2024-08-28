@@ -47,7 +47,7 @@ fn repl(vm: *VM) !void {
     }
 }
 
-fn runFile(path: []u8) !void {
+fn runFile(path: []u8, vm: *VM) !void {
     const file = std.fs.cwd().openFile(path, .{}) catch |e| switch (e) {
         error.FileNotFound => {
             std.debug.print("Error: Could not open file {s}.\n", .{path});
@@ -61,9 +61,6 @@ fn runFile(path: []u8) !void {
     const buffer = try allocator.alloc(u8, size);
 
     _ = try file.readAll(buffer);
-
-    var vm = VM.init();
-    defer vm.free();
 
     _ = vm.interpret(buffer) catch |e| switch (e) {
         error.CompileErr => {
@@ -90,7 +87,7 @@ pub fn main() !void {
 
     try switch (args.len) {
         1 => repl(&vm),
-        2 => runFile(args[1]),
+        2 => runFile(args[1], &vm),
         else => {
             std.debug.print("Usage: zlox [path]\n", .{});
             std.process.exit(64);

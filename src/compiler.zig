@@ -146,8 +146,7 @@ pub const Compiler = struct {
     }
 
     fn number(self: *Self) Combined!void {
-        std.debug.print("item being parsed: {c}\n", .{self.previous.start[0..self.current.len]});
-        const value: Value = try std.fmt.parseFloat(Value, self.previous.start[0..self.current.len]);
+        const value: Value = try std.fmt.parseFloat(Value, self.previous.start[0..self.previous.len]);
         try self.emitConstant(value);
     }
 
