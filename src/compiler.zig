@@ -101,6 +101,7 @@ pub const Compiler = struct {
 
         while (true) {
             self.current = self.scanner.scanToken();
+
             var line: usize = std.math.maxInt(usize);
 
             if (self.current.line != line) {
@@ -112,6 +113,8 @@ pub const Compiler = struct {
             std.debug.print("Type: {any}, Len: {d}\n", .{ self.current.type, self.current.len });
 
             if (self.current.type != .kerror) break;
+
+            if (self.current.type == .eof) return;
 
             self.errorAtCurrent(self.current.start[0..self.current.len]);
         }

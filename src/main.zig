@@ -17,7 +17,8 @@ fn repl(vm: *VM) !void {
     defer input.deinit();
 
     while (true) {
-        input.clearRetainingCapacity();
+        input.clearAndFree();
+        try input.ensureTotalCapacityPrecise(1);
         try stdout.writeAll("> ");
 
         stdin.reader().streamUntilDelimiter(input.writer(), DELIMITER, null) catch |e| switch (e) {
