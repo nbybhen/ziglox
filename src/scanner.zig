@@ -36,7 +36,6 @@ pub const Scanner = struct {
         if (self.isAtEnd()) return self.makeToken(.eof);
 
         const c = self.advance();
-        std.debug.print("current c: {c}, ", .{c});
 
         return switch (c) {
             '(' => self.makeToken(.left_paren),
@@ -68,9 +67,11 @@ pub const Scanner = struct {
     }
 
     fn identifier(self: *Scanner) Token {
-        while (isAlpha(self.peek()) and isDigit(self.peek())) _ = self.advance();
+        while (isAlpha(self.peek()) or isDigit(self.peek())) : (_ = self.advance()) {}
+
         return self.makeToken(self.identifierType());
     }
+
 
     fn identifierType(self: Scanner) TokenType {
         return switch (self.start[0]) {

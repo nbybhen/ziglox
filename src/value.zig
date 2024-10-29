@@ -44,9 +44,9 @@ pub const Value = union(enum) {
 
     pub fn printValue(self: Value) void {
         switch (self) {
-            .boolean => std.debug.print("{}", .{self.boolean}),
-            .number => std.debug.print("{d}", .{self.number}),
-            else => std.debug.print("nil", .{}),
+            .boolean => std.debug.print("value = {}\n", .{self.boolean}),
+            .number => std.debug.print("value = {d}\n", .{self.number}),
+            else => std.debug.print("value = nil\n", .{}),
         }
     }
 

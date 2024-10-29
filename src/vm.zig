@@ -59,7 +59,7 @@ pub const VM = struct {
         while (true) {
             if (true) {
                 for (self.stack.items) |value| {
-                    std.debug.print("[stack value: {d}]\n", .{value.number});
+                    value.printValue();
                 }
                 std.debug.print("\n", .{});
                 _ = self.chunk.disassembleInstruction(@intFromPtr(self.ip) - @intFromPtr(self.chunk.code.items.ptr));
@@ -73,7 +73,7 @@ pub const VM = struct {
                     std.debug.print("{d}\n", .{constant.number});
                 },
                 .op_return => {
-                    std.debug.print("{d}", .{self.stack.pop().number});
+                    self.stack.pop().printValue();
                     std.debug.print("\n", .{});
                     return;
                 },
