@@ -111,6 +111,7 @@ pub const Compiler = struct {
                 std.debug.print("   | ", .{});
             }
             std.debug.print("Type: {any}, Len: {d}\n", .{ self.current.type, self.current.len });
+            std.debug.print("test: {s}\n", .{self.current.start[0..self.current.len]});
 
             if (self.current.type != .kerror) break;
 

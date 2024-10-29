@@ -36,6 +36,7 @@ pub const Scanner = struct {
         if (self.isAtEnd()) return self.makeToken(.eof);
 
         const c = self.advance();
+        std.debug.print("current c: {c}, ", .{c});
 
         return switch (c) {
             '(' => self.makeToken(.left_paren),
@@ -111,8 +112,8 @@ pub const Scanner = struct {
         };
     }
 
-    fn checkKeyword(self: Scanner, start: usize, len: usize, rest: []const u8, t: TokenType) TokenType {
-        if (@intFromPtr(self.current) - @intFromPtr(self.start) == start + len and std.mem.eql(u8, self.start[start..len], rest)) {
+    fn checkKeyword(self: Scanner, start: usize, _: usize, rest: []const u8, t: TokenType) TokenType {
+        if ((@intFromPtr(self.current) - @intFromPtr(self.start) == start + rest.len) and std.mem.eql(u8, self.start[start .. rest.len + 1], rest)) {
             return t;
         }
 
