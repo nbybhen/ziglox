@@ -54,10 +54,12 @@ pub const VM = struct {
     }
 
     pub fn run(self: *VM) !void {
+        self.resetStack();
+
         while (true) {
             if (true) {
                 for (self.stack.items) |value| {
-                    std.debug.print("[{d}]\n", .{value});
+                    std.debug.print("[stack value: {d}]\n", .{value.number});
                 }
                 std.debug.print("\n", .{});
                 _ = self.chunk.disassembleInstruction(@intFromPtr(self.ip) - @intFromPtr(self.chunk.code.items.ptr));
@@ -68,40 +70,105 @@ pub const VM = struct {
                 .op_constant => {
                     const constant = self.readConstant();
                     try self.stack.append(constant);
-                    std.debug.print("{d}\n", .{constant});
+                    std.debug.print("{d}\n", .{constant.number});
                 },
                 .op_return => {
-                    std.debug.print("{d}", .{self.stack.pop()});
+                    std.debug.print("{d}", .{self.stack.pop().number});
                     std.debug.print("\n", .{});
                     return;
                 },
-                .op_negate => try self.stack.append(-self.stack.pop()),
+                .op_negate => {
+                    if (self.peek(0).isNumber()) {
+                        try self.stack.append(Value.fromNumber(-self.stack.pop().number));
+                    }
+                    self.runtimeError("Operand must be a number.", .{});
+                    return InterpretResult.RuntimeErr;
+                },
                 .op_add => {
-                    const b = self.stack.pop();
-                    const a = self.stack.pop();
-                    try self.stack.append(a + b);
+                    if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
+                        const b = self.stack.pop();
+                        const a = self.stack.pop();
+                        try self.stack.append(Value.fromNumber(a.number + b.number));
+                    } else {
+                        self.runtimeError("Operands must both be numbers", .{});
+                        return InterpretResult.RuntimeErr;
+                    }
                 },
                 .op_sub => {
-                    const b = self.stack.pop();
-                    const a = self.stack.pop();
-                    try self.stack.append(a - b);
+                    if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
+                        const b = self.stack.pop();
+                        const a = self.stack.pop();
+                        try self.stack.append(Value.fromNumber(a.number - b.number));
+                    } else {
+                        self.runtimeError("Operands must both be numbers", .{});
+                        return InterpretResult.RuntimeErr;
+                    }
                 },
                 .op_mul => {
-                    const b = self.stack.pop();
-                    const a = self.stack.pop();
-                    try self.stack.append(a * b);
+                    if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
+                        const b = self.stack.pop();
+                        const a = self.stack.pop();
+                        try self.stack.append(Value.fromNumber(a.number * b.number));
+                    } else {
+                        self.runtimeError("Operands must both be numbers", .{});
+                        return InterpretResult.RuntimeErr;
+                    }
                 },
                 .op_div => {
+                    if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
+                        const b = self.stack.pop();
+                        const a = self.stack.pop();
+                        try self.stack.append(Value.fromNumber(a.number / b.number));
+                    } else {
+                        self.runtimeError("Operands must both be numbers", .{});
+                        return InterpretResult.RuntimeErr;
+                    }
+                },
+                .op_nil => try self.stack.append(Value{ .nil = undefined }),
+                .op_false => try self.stack.append(Value.fromBoolean(false)),
+                .op_true => try self.stack.append(Value.fromBoolean(true)),
+                .op_not => try self.stack.append(Value.fromBoolean(self.stack.pop().isFalsey())),
+                .op_equal => {
                     const b = self.stack.pop();
                     const a = self.stack.pop();
-                    try self.stack.append(a / b);
+                    try self.stack.append(Value.fromBoolean(a.equal(b)));
+                },
+                .op_greater => {
+                    const b = self.stack.pop();
+                    const a = self.stack.pop();
+                    try self.stack.append(Value.fromBoolean(a.number > b.number));
+                },
+                .op_less => {
+                    const b = self.stack.pop();
+                    const a = self.stack.pop();
+                    try self.stack.append(Value.fromBoolean(a.number < b.number));
                 },
             }
         }
     }
 
+    fn runtimeError(self: *VM, msg: []const u8, args: anytype) void {
+        std.debug.print("{s} {any}\n", .{ msg, args });
+
+        const instruction: usize = @intFromPtr(self.ip) - @intFromPtr(self.chunk.code.items.ptr) - 1;
+        std.debug.print("[line {d}] in script\n", .{self.chunk.lines.items[instruction]});
+
+        self.resetStack();
+    }
+
+    fn resetStack(self: *VM) void {
+        self.stack.clearAndFree();
+    }
+
     fn readConstant(self: *VM) Value {
         return self.chunk.constants.values.items[self.readByte()];
+    }
+
+    fn peek(self: *VM, dist: usize) Value {
+        if (self.stack.items.len == 0) {
+            std.debug.panic("STACK IS EMPTY", .{});
+        }
+        return self.stack.items[self.stack.items.len - dist - 1];
     }
 
     pub fn readByte(self: *VM) u8 {

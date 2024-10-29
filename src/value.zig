@@ -2,7 +2,77 @@ const std = @import("std");
 
 const allocator = std.heap.page_allocator;
 
-pub const Value = f32;
+pub const Value = union(enum) {
+    boolean: bool,
+    number: f64,
+    nil,
+
+    // Creates a new Value based on a bool / f64
+    pub fn fromNumber(value: f64) Value {
+        return Value{ .number = value };
+    }
+
+    pub fn fromBoolean(value: bool) Value {
+        return Value{ .boolean = value };
+    }
+
+    // Checks if the current Value is a bool, num, or nil
+    pub fn isBoolean(self: Value) bool {
+        return switch (self) {
+            .boolean => true,
+            else => false,
+        };
+    }
+
+    pub fn isNumber(self: Value) bool {
+        return switch (self) {
+            .number => true,
+            else => false,
+        };
+    }
+
+    pub fn isNil(self: Value) bool {
+        return switch (self) {
+            .nil => true,
+            else => false,
+        };
+    }
+
+    pub fn isFalsey(self: Value) bool {
+        return self.isNil() or (self.isBoolean() and !self.boolean);
+    }
+
+    pub fn printValue(self: Value) void {
+        switch (self) {
+            .boolean => std.debug.print("{}", .{self.boolean}),
+            .number => std.debug.print("{d}", .{self.number}),
+            else => std.debug.print("nil", .{}),
+        }
+    }
+
+    pub fn equal(self: Value, right: Value) bool {
+        return switch (self) {
+            .boolean => |a| {
+                switch (right) {
+                    .boolean => |b| return b == a,
+                    else => return false,
+                }
+            },
+            .number => |a| {
+                switch (right) {
+                    .number => |b| return b == a,
+                    else => return false,
+                }
+            },
+            .nil => {
+                switch (right) {
+                    .nil => return true,
+                    else => return false,
+                }
+            },
+        };
+    }
+};
 
 pub const ValueArray = struct {
     values: std.ArrayList(Value),
@@ -20,6 +90,6 @@ pub const ValueArray = struct {
     }
 
     pub fn printValue(_: ValueArray, value: Value) void {
-        std.debug.print("-> {d}\n", .{value});
+        std.debug.print("-> {d}\n", .{value.number});
     }
 };

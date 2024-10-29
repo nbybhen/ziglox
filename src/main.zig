@@ -29,10 +29,10 @@ fn repl(vm: *VM) !void {
         const line = if (builtin.os.tag == .windows)
             std.mem.trimLeft(u8, input.items, "\n")
         else
-            input;
+            input.items;
 
         // Quits REPL
-        if (std.mem.eql(u8, line.items, ":q")) break;
+        if (std.mem.eql(u8, line, ":q")) break;
 
         _ = vm.interpret(input.items) catch |e| switch (e) {
             error.CompileErr => {

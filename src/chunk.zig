@@ -11,6 +11,13 @@ pub const OpCode = enum {
     op_sub,
     op_mul,
     op_div,
+    op_false,
+    op_true,
+    op_nil,
+    op_not,
+    op_equal,
+    op_greater,
+    op_less,
 
     pub fn toString(self: OpCode) []const u8 {
         return switch (self) {
@@ -21,6 +28,13 @@ pub const OpCode = enum {
             .op_sub => "OP_SUB",
             .op_mul => "OP_MULTIPLY",
             .op_div => "OP_DIVIDE",
+            .op_false => "OP_FALSE",
+            .op_true => "OP_TRUE",
+            .op_nil => "OP_NIL",
+            .op_not => "OP_NOT",
+            .op_equal => "OP_EQUAL",
+            .op_greater => "OP_GREATER",
+            .op_less => "OP_LESS",
         };
     }
 };
@@ -76,7 +90,7 @@ pub const Chunk = struct {
 
         const instruction: OpCode = @enumFromInt(self.code.items[offset]);
         return switch (instruction) {
-            .op_return, .op_negate, .op_add, .op_sub, .op_mul, .op_div => self.simpleInstruction(instruction.toString(), offset),
+            .op_return, .op_negate, .op_add, .op_sub, .op_mul, .op_div, .op_true, .op_false, .op_nil, .op_not, .op_equal, .op_greater, .op_less => self.simpleInstruction(instruction.toString(), offset),
             .op_constant => self.constantInstruction("OP_CONSTANT", offset),
         };
     }

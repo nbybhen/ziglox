@@ -7,17 +7,17 @@ const TokenType = @import("scanner.zig").TokenType;
 const Value = @import("value.zig").Value;
 
 pub const Precedence = enum {
-    none,
-    assignment, // =
-    por, // or
-    pand, // and
-    equality, // == !=
-    comparison, // < > <= >=
-    term, // + -
-    factor, // * /
-    unary, // ! -
-    call, // . ()
-    primary,
+    prec_none,
+    prec_assignment, // =
+    prec_or, // or
+    prec_and, // and
+    prec_equality, // == !=
+    prec_comparison, // < > <= >=
+    prec_term, // + -
+    prec_factor, // * /
+    prec_unary, // ! -
+    prec_call, // . ()
+    prec_primary,
 };
 
 const Combined = std.fmt.ParseFloatError || std.mem.Allocator.Error;
@@ -32,46 +32,46 @@ pub const Compiler = struct {
     const Self = @This();
 
     const rules = std.EnumArray(TokenType, ParseRule).init(.{
-        .left_paren = ParseRule{ .prefix = &grouping, .infix = undefined, .precedence = .none },
-        .right_paren = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .left_brace = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .right_brace = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .comma = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .dot = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .minus = .{ .prefix = &Self.unary, .infix = &Self.binary, .precedence = .term },
-        .plus = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .term },
-        .semicolon = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .slash = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .factor },
-        .star = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .factor },
-        .bang = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .bang_equal = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .equal = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .equal_equal = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .greater = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .greater_equal = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .less = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .less_equal = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .identifier = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .string = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .number = .{ .prefix = &Self.number, .infix = undefined, .precedence = .none },
-        .kand = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .class = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kelse = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kfalse = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kfor = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .fun = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kif = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .nil = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kor = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .print = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kreturn = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .super = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .this = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .ktrue = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kvar = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kwhile = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .kerror = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
-        .eof = .{ .prefix = undefined, .infix = undefined, .precedence = .none },
+        .left_paren = ParseRule{ .prefix = &grouping, .infix = undefined, .precedence = .prec_none },
+        .right_paren = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .left_brace = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .right_brace = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .comma = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .dot = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .minus = .{ .prefix = &Self.unary, .infix = &Self.binary, .precedence = .prec_term },
+        .plus = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_term },
+        .semicolon = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .slash = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_factor },
+        .star = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_factor },
+        .bang = .{ .prefix = &Self.unary, .infix = undefined, .precedence = .prec_none },
+        .bang_equal = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_equality },
+        .equal = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .equal_equal = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_equality },
+        .greater = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_comparison },
+        .greater_equal = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_comparison },
+        .less = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_comparison },
+        .less_equal = .{ .prefix = undefined, .infix = &Self.binary, .precedence = .prec_comparison },
+        .identifier = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .string = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .number = .{ .prefix = &Self.number, .infix = undefined, .precedence = .prec_none },
+        .kand = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .class = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kelse = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kfalse = .{ .prefix = &Self.literal, .infix = undefined, .precedence = .prec_none },
+        .kfor = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .fun = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kif = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .nil = .{ .prefix = &Self.literal, .infix = undefined, .precedence = .prec_none },
+        .kor = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .print = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kreturn = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .super = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .this = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .ktrue = .{ .prefix = &Self.literal, .infix = undefined, .precedence = .prec_none },
+        .kvar = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kwhile = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .kerror = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
+        .eof = .{ .prefix = undefined, .infix = undefined, .precedence = .prec_none },
     });
 
     chunk: *Chunk,
@@ -143,14 +143,24 @@ pub const Compiler = struct {
         self.hadError = true;
     }
 
+    // Functions for Pratt-parsing rules
     pub fn grouping(self: *Self) !void {
         try self.expression();
         self.consume(.right_paren, "Expect ')' after expression.");
     }
 
     fn number(self: *Self) Combined!void {
-        const value: Value = try std.fmt.parseFloat(Value, self.previous.start[0..self.previous.len]);
-        try self.emitConstant(value);
+        const value = try std.fmt.parseFloat(f64, self.previous.start[0..self.previous.len]);
+        try self.emitConstant(Value.fromNumber(value));
+    }
+
+    fn literal(self: *Self) !void {
+        try switch (self.previous.type) {
+            .kfalse => self.emitOpCode(.op_false),
+            .ktrue => self.emitOpCode(.op_true),
+            .nil => self.emitOpCode(.op_nil),
+            else => unreachable(),
+        };
     }
 
     pub fn binary(self: *Self) Combined!void {
@@ -159,10 +169,16 @@ pub const Compiler = struct {
         try self.parsePrecedence(@enumFromInt(@intFromEnum(rule.precedence) + 1));
 
         try switch (op_type) {
-            .plus => self.emitOpByte(.op_add),
-            .minus => self.emitOpByte(.op_sub),
-            .star => self.emitOpByte(.op_mul),
-            .slash => self.emitOpByte(.op_div),
+            .plus => self.emitOpCode(.op_add),
+            .minus => self.emitOpCode(.op_sub),
+            .star => self.emitOpCode(.op_mul),
+            .slash => self.emitOpCode(.op_div),
+            .bang_equal => self.emitOpCodes(.op_equal, .op_not),
+            .equal_equal => self.emitOpCode(.op_equal),
+            .greater => self.emitOpCode(.op_greater),
+            .greater_equal => self.emitOpCodes(.op_less, .op_not),
+            .less => self.emitOpCode(.op_less),
+            .less_equal => self.emitOpCodes(.op_greater, .op_not),
             else => return,
         };
     }
@@ -170,11 +186,12 @@ pub const Compiler = struct {
     pub fn unary(self: *Self) !void {
         const op_type = self.previous.type;
         // Compiles the operand
-        try self.parsePrecedence(.unary);
+        try self.parsePrecedence(.prec_unary);
 
         // Emits the operator instruction
         try switch (op_type) {
-            .minus => self.emitOpByte(.op_negate),
+            .bang => self.emitOpCode(.op_not),
+            .minus => self.emitOpCode(.op_negate),
             else => return,
         };
     }
@@ -193,7 +210,7 @@ pub const Compiler = struct {
     }
 
     pub fn emitOpBytes(self: Self, b1: OpCode, b2: u8) !void {
-        try self.emitOpByte(b1);
+        try self.emitOpCode(b1);
         try self.emitByte(b2);
     }
 
@@ -217,7 +234,7 @@ pub const Compiler = struct {
         }
     }
 
-    pub fn emitOpByte(self: Self, byte: OpCode) !void {
+    pub fn emitOpCode(self: Self, byte: OpCode) !void {
         try self.chunk.writeOp(byte, self.previous.line);
     }
 
@@ -226,7 +243,7 @@ pub const Compiler = struct {
     }
 
     pub fn emitReturn(self: Self) !void {
-        try self.emitOpByte(.op_return);
+        try self.emitOpCode(.op_return);
     }
 
     pub fn emitBytes(self: Self, b1: u8, b2: u8) void {
@@ -234,8 +251,13 @@ pub const Compiler = struct {
         self.emitByte(b2);
     }
 
+    pub fn emitOpCodes(self: Self, op1: OpCode, op2: OpCode) !void {
+        try self.emitOpCode(op1);
+        try self.emitOpCode(op2);
+    }
+
     pub fn expression(self: *Self) !void {
-        try self.parsePrecedence(.assignment);
+        try self.parsePrecedence(.prec_assignment);
     }
 
     fn makeConstant(self: Self, value: Value) !u8 {
