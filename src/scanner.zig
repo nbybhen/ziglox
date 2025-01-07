@@ -186,7 +186,7 @@ pub const Scanner = struct {
 
     fn peekNext(self: *Scanner) u8 {
         if (self.isAtEnd()) return '\x00';
-        return self.current[0];
+        return self.current[1];
     }
 
     fn isAtEnd(self: Scanner) bool {

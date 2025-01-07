@@ -5,7 +5,8 @@ const builtin = @import("builtin");
 const InterpretResult = @import("vm.zig").InterpretResult;
 const VM = @import("vm.zig").VM;
 
-const allocator = std.heap.page_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 const DELIMITER = if (builtin.os.tag == .windows) '\r' else '\n';
 
 const Error = InterpretResult || std.fs.File.WriteError || std.mem.Allocator.Error;

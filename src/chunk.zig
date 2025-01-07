@@ -1,7 +1,8 @@
 const std = @import("std");
 const value = @import("value.zig");
 
-const allocator = std.heap.page_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 
 pub const OpCode = enum {
     op_return,

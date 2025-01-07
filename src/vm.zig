@@ -12,7 +12,8 @@ pub const InterpretResult = error{
     RuntimeErr,
 };
 
-const allocator = std.heap.page_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 
 var debug = false;
 

@@ -1,6 +1,7 @@
 const std = @import("std");
 
-const allocator = std.heap.page_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 
 pub const Value = union(enum) {
     boolean: bool,
