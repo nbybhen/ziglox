@@ -61,6 +61,7 @@ fn runFile(path: []u8, vm: *VM) !void {
 
     const size = (try file.stat()).size;
     const buffer = try allocator.alloc(u8, size);
+    defer allocator.free(buffer);
 
     _ = try file.readAll(buffer);
 
@@ -78,6 +79,12 @@ fn runFile(path: []u8, vm: *VM) !void {
 }
 
 pub fn main() !void {
+    defer {
+        const deinit_status = gpa.deinit();
+        if (deinit_status != .ok) {
+            @panic("LEAK!");
+        }
+    }
     var chunk = Chunk.init();
     defer chunk.free();
 

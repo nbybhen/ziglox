@@ -72,7 +72,6 @@ pub const Scanner = struct {
         return self.makeToken(self.identifierType());
     }
 
-
     fn identifierType(self: Scanner) TokenType {
         return switch (self.start[0]) {
             'a' => self.checkKeyword(1, 2, "nd", .kand),
