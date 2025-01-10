@@ -31,8 +31,6 @@ pub const VM = struct {
     }
 
     pub fn interpret(self: *VM, source: []u8) !void {
-        std.debug.print("Source: {s}\n", .{source});
-
         var chunk = Chunk.init();
         defer chunk.free();
 
@@ -57,8 +55,9 @@ pub const VM = struct {
     pub fn run(self: *VM) !void {
         self.resetStack();
 
+        // TODO: Create debugging flag
         while (true) {
-            if (true) {
+            if (false) {
                 for (self.stack.items) |value| {
                     value.printValue();
                 }
@@ -71,7 +70,6 @@ pub const VM = struct {
                 .op_constant => {
                     const constant = self.readConstant();
                     try self.stack.append(constant);
-                    std.debug.print("{d}\n", .{constant.number});
                 },
                 .op_return => {
                     self.stack.pop().printValue();

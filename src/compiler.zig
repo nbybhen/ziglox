@@ -105,12 +105,12 @@ pub const Compiler = struct {
             var line: usize = std.math.maxInt(usize);
 
             if (self.current.line != line) {
-                std.debug.print("Line: {d:0>4} ", .{self.current.line});
+                //std.debug.print("Line: {d:0>4} ", .{self.current.line});
                 line = self.current.line;
             } else {
                 std.debug.print("   | ", .{});
             }
-            std.debug.print("Type: {any}, Len: {d}\n", .{ self.current.type, self.current.len });
+            //std.debug.print("Type: {any}, Len: {d}\n", .{ self.current.type, self.current.len });
 
             if (self.current.type != .kerror) break;
 
@@ -128,15 +128,16 @@ pub const Compiler = struct {
         self.errorAt(self.previous, message);
     }
 
+    // TODO: Fix error handling (e.g. 1+[word])
     fn errorAt(self: *Self, token: Token, message: []const u8) void {
         if (self.panicMode) return;
         self.panicMode = true;
-        std.debug.print("[line {d}] Error:", .{token.line});
+        std.debug.print("[line {d}] Error", .{token.line});
 
         switch (token.type) {
             .eof => std.debug.print(" at end", .{}),
-            .kerror => std.debug.print(" at '{d} {any}'", .{ token.line, token.start }),
-            else => {},
+            .kerror => {},
+            else => std.debug.print(" at '{s}'", .{token.start[0..token.len]}),
         }
 
         std.debug.print(": {s}", .{message});
@@ -275,7 +276,7 @@ pub const Compiler = struct {
         self.advance();
         try self.expression();
 
-        self.consume(.eof, "Expected end of expression.");
+        self.consume(.eof, "Expected end of expression.\n");
         try self.endCompiler();
         //return !self.hadError;
     }

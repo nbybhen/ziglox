@@ -18,8 +18,6 @@ fn repl(vm: *VM) !void {
     defer input.deinit();
 
     while (true) {
-        input.clearAndFree();
-        try input.ensureTotalCapacityPrecise(1);
         try stdout.writeAll("> ");
 
         stdin.reader().streamUntilDelimiter(input.writer(), DELIMITER, null) catch |e| switch (e) {
@@ -28,14 +26,14 @@ fn repl(vm: *VM) !void {
         };
 
         const line = if (builtin.os.tag == .windows)
-            std.mem.trimLeft(u8, input.items, "\n")
+            std.mem.trimLeft(u8, input.toOwnedSliceSentinel(0), "\n")
         else
-            input.items;
+            try input.toOwnedSliceSentinel(0);
 
         // Quits REPL
         if (std.mem.eql(u8, line, ":q")) break;
 
-        _ = vm.interpret(input.items) catch |e| switch (e) {
+        _ = vm.interpret(line) catch |e| switch (e) {
             error.CompileErr => {
                 std.debug.print("COMPILE_ERR\n", .{});
                 std.process.exit(65);
@@ -49,6 +47,7 @@ fn repl(vm: *VM) !void {
     }
 }
 
+// TODO: Fix "unexpecteed char" bug
 fn runFile(path: []u8, vm: *VM) !void {
     const file = std.fs.cwd().openFile(path, .{}) catch |e| switch (e) {
         error.FileNotFound => {
