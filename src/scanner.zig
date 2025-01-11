@@ -69,7 +69,8 @@ pub const Scanner = struct {
     fn identifier(self: *Scanner) Token {
         while (isAlpha(self.peek()) or isDigit(self.peek())) : (_ = self.advance()) {}
 
-        return self.makeToken(self.identifierType());
+        const tmp = self.identifierType();
+        return self.makeToken(tmp);
     }
 
     fn identifierType(self: Scanner) TokenType {
@@ -91,7 +92,9 @@ pub const Scanner = struct {
                         'a' => self.checkKeyword(2, 3, "lse", .kfalse),
                         'o' => self.checkKeyword(2, 1, "r", .kfor),
                         'u' => self.checkKeyword(2, 1, "n", .fun),
-                        else => .identifier,
+                        else => blk: {
+                            break :blk .identifier;
+                        },
                     };
                 } else {
                     return .identifier;
@@ -148,7 +151,7 @@ pub const Scanner = struct {
     }
 
     fn makeToken(self: Scanner, t: TokenType) Token {
-        return Token{ .start = self.start, .type = t, .len = (@intFromPtr(self.current) - @intFromPtr(self.start)), .line = self.line };
+        return Token{ .start = self.start, .type = t, .len = @intFromPtr(self.current) - @intFromPtr(self.start), .line = self.line };
     }
 
     fn errorToken(self: Scanner, msg: []const u8) Token {

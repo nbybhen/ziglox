@@ -35,11 +35,11 @@ fn repl(vm: *VM) !void {
 
         _ = vm.interpret(line) catch |e| switch (e) {
             error.CompileErr => {
-                std.debug.print("COMPILE_ERR\n", .{});
+                std.debug.print("(COMPILE_ERROR)\n", .{});
                 std.process.exit(65);
             },
             error.RuntimeErr => {
-                std.debug.print("RUNTIME_ERR\n", .{});
+                std.debug.print("(RUNTIME_ERR)\n", .{});
                 std.process.exit(70);
             },
             else => unreachable,
@@ -47,7 +47,6 @@ fn repl(vm: *VM) !void {
     }
 }
 
-// TODO: Fix "unexpecteed char" bug
 fn runFile(path: []u8, vm: *VM) !void {
     const file = std.fs.cwd().openFile(path, .{}) catch |e| switch (e) {
         error.FileNotFound => {

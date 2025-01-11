@@ -37,10 +37,12 @@ pub const VM = struct {
         var scanner = Scanner.init(source);
 
         var compiler = Compiler.init(&scanner);
-        compiler.compile(&chunk) catch |err| {
+        if (!(compiler.compile(&chunk) catch |err| {
             std.debug.print("Error: {any}\n", .{err});
             return InterpretResult.CompileErr;
-        };
+        })) {
+            return InterpretResult.CompileErr;
+        }
 
         self.chunk = chunk;
         self.ip = chunk.code.items.ptr;
