@@ -59,7 +59,7 @@ fn runFile(path: []u8, vm: *VM) !void {
     defer file.close();
 
     const size = (try file.stat()).size;
-    const buffer = try allocator.alloc(u8, size);
+    const buffer = try allocator.allocSentinel(u8, size, 0);
     defer allocator.free(buffer);
 
     _ = try file.readAll(buffer);
@@ -73,7 +73,7 @@ fn runFile(path: []u8, vm: *VM) !void {
             std.debug.print("RUNTIME_ERR\n", .{});
             std.process.exit(70);
         },
-        else => unreachable,
+        else => return e,
     };
 }
 

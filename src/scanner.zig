@@ -60,7 +60,7 @@ pub const Scanner = struct {
                     return self.identifier();
                 }
 
-                std.debug.print("Unexpected char: {c}", .{c});
+                std.debug.print("Unexpected char: {d}.", .{c});
                 return self.errorToken("Unexpected character.");
             },
         };
