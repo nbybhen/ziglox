@@ -1,4 +1,6 @@
 const std = @import("std");
+const obj = @import("object.zig");
+
 const Chunk = @import("chunk.zig").Chunk;
 const OpCode = @import("chunk.zig").OpCode;
 const Value = @import("value.zig").Value;
@@ -86,12 +88,14 @@ pub const VM = struct {
                     return InterpretResult.RuntimeErr;
                 },
                 .op_add => {
-                    if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
+                    if (obj.isObjType(self.peek(0), .obj_string) and obj.isObjType(self.peek(1), .obj_string)) {
+                        try self.concatenate();
+                    } else if (self.peek(0).isNumber() and self.peek(1).isNumber()) {
                         const b = self.stack.pop();
                         const a = self.stack.pop();
                         try self.stack.append(Value.fromNumber(a.number + b.number));
                     } else {
-                        self.runtimeError("Operands must both be numbers", .{});
+                        self.runtimeError("Operands must both be numbers or strings.\nItems: [{any}]", .{self.peek(0)});
                         return InterpretResult.RuntimeErr;
                     }
                 },
@@ -146,6 +150,14 @@ pub const VM = struct {
                 },
             }
         }
+    }
+
+    pub fn concatenate(self: *VM) !void {
+        const str_b = self.stack.pop().obj.asObjString();
+        const str_a = self.stack.pop().obj.asObjString();
+
+        const chars = obj.ObjString.allocateString(try std.mem.concat(gpa.allocator(), u8, &.{ str_a.chars, str_b.chars }));
+        try self.stack.append(Value{ .obj = &chars.obj });
     }
 
     fn runtimeError(self: *VM, msg: []const u8, args: anytype) void {

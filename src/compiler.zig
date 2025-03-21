@@ -5,6 +5,7 @@ const OpCode = @import("chunk.zig").OpCode;
 const Token = @import("scanner.zig").Token;
 const TokenType = @import("scanner.zig").TokenType;
 const Value = @import("value.zig").Value;
+const Obj = @import("object.zig");
 
 pub const Precedence = enum {
     prec_none,
@@ -52,7 +53,7 @@ pub const Compiler = struct {
         .less = .{ .prefix = null, .infix = &Self.binary, .precedence = .prec_comparison },
         .less_equal = .{ .prefix = null, .infix = &Self.binary, .precedence = .prec_comparison },
         .identifier = .{ .prefix = null, .infix = null, .precedence = .prec_none },
-        .string = .{ .prefix = null, .infix = null, .precedence = .prec_none },
+        .string = .{ .prefix = &Self.string, .infix = null, .precedence = .prec_none },
         .number = .{ .prefix = &Self.number, .infix = null, .precedence = .prec_none },
         .kand = .{ .prefix = null, .infix = null, .precedence = .prec_none },
         .class = .{ .prefix = null, .infix = null, .precedence = .prec_none },
@@ -153,6 +154,11 @@ pub const Compiler = struct {
     fn number(self: *Self) Combined!void {
         const value = try std.fmt.parseFloat(f64, self.previous.start[0..self.previous.len]);
         try self.emitConstant(Value.fromNumber(value));
+    }
+
+    // TODO: Change import
+    fn string(self: *Self) !void {
+        try self.emitConstant(Value{ .obj = &Obj.ObjString.copy(self.previous.start[0..self.previous.len]).obj });
     }
 
     fn literal(self: *Self) !void {

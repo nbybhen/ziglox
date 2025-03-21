@@ -1,4 +1,6 @@
 const std = @import("std");
+const object = @import("object.zig");
+const Obj = @import("object.zig").Obj;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const allocator = gpa.allocator();
@@ -6,6 +8,7 @@ const allocator = gpa.allocator();
 pub const Value = union(enum) {
     boolean: bool,
     number: f64,
+    obj: *Obj,
     nil,
 
     // Creates a new Value based on a bool / f64
@@ -21,6 +24,13 @@ pub const Value = union(enum) {
     pub fn isBoolean(self: Value) bool {
         return switch (self) {
             .boolean => true,
+            else => false,
+        };
+    }
+
+    pub fn isObj(self: Value) bool {
+        return switch (self) {
+            .obj => true,
             else => false,
         };
     }
@@ -47,6 +57,9 @@ pub const Value = union(enum) {
         switch (self) {
             .boolean => std.debug.print("{}\n", .{self.boolean}),
             .number => std.debug.print("{d}\n", .{self.number}),
+            .obj => |x| switch (x.obj_type) {
+                .obj_string => std.debug.print("{s}\n", .{x.asObjString().chars}),
+            },
             else => std.debug.print("nil\n", .{}),
         }
     }
@@ -70,6 +83,22 @@ pub const Value = union(enum) {
                     .nil => return true,
                     else => return false,
                 }
+            },
+            .obj => |a| switch (right) {
+                .obj => |b| {
+                    switch (a.obj_type) {
+                        .obj_string => {
+                            if (a.obj_type == b.obj_type) {
+                                const first = a.asObjString().chars;
+                                const second = b.asObjString().chars;
+
+                                return first.len == second.len and std.mem.eql(u8, first, second);
+                            }
+                            return false;
+                        },
+                    }
+                },
+                else => false,
             },
         };
     }
