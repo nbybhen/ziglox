@@ -5,6 +5,7 @@ const OpCode = @import("chunk.zig").OpCode;
 const Token = @import("scanner.zig").Token;
 const TokenType = @import("scanner.zig").TokenType;
 const Value = @import("value.zig").Value;
+const VM = @import("vm.zig").VM;
 const Obj = @import("object.zig");
 
 pub const Precedence = enum {
@@ -81,8 +82,9 @@ pub const Compiler = struct {
     previous: Token,
     hadError: bool,
     panicMode: bool,
+    vm: *VM,
 
-    pub fn init(scanner: *Scanner) Self {
+    pub fn init(scanner: *Scanner, vm: *VM) Self {
         return Self{
             .previous = undefined,
             .current = undefined,
@@ -90,6 +92,7 @@ pub const Compiler = struct {
             .panicMode = false,
             .scanner = scanner,
             .chunk = undefined,
+            .vm = vm,
         };
     }
 
@@ -158,7 +161,7 @@ pub const Compiler = struct {
 
     // TODO: Change import
     fn string(self: *Self) !void {
-        try self.emitConstant(Value{ .obj = &Obj.ObjString.copy(self.previous.start[0..self.previous.len]).obj });
+        try self.emitConstant(Value{ .obj = &Obj.ObjString.copy(self.previous.start[0..self.previous.len], self.vm).obj });
     }
 
     fn literal(self: *Self) !void {

@@ -23,12 +23,14 @@ pub const VM = struct {
     chunk: Chunk,
     ip: [*]u8,
     stack: std.ArrayList(Value),
+    objects: ?*obj.Obj,
 
     pub fn init() VM {
         return VM{
             .chunk = Chunk.init(),
             .ip = undefined,
             .stack = std.ArrayList(Value).init(allocator),
+            .objects = null,
         };
     }
 
@@ -38,7 +40,7 @@ pub const VM = struct {
 
         var scanner = Scanner.init(source);
 
-        var compiler = Compiler.init(&scanner);
+        var compiler = Compiler.init(&scanner, self);
         if (!(compiler.compile(&chunk) catch |err| {
             std.debug.print("Error: {any}\n", .{err});
             return InterpretResult.CompileErr;
@@ -52,8 +54,17 @@ pub const VM = struct {
         _ = try self.run();
     }
 
+    pub fn freeObjects(self: *VM) void {
+        var object = self.objects;
+        while (object != null) {
+            const next = object.?.next;
+            object = next;
+        }
+    }
+
     pub fn free(self: *VM) void {
         self.stack.deinit();
+        self.freeObjects();
     }
 
     pub fn run(self: *VM) !void {
@@ -156,7 +167,7 @@ pub const VM = struct {
         const str_b = self.stack.pop().obj.asObjString();
         const str_a = self.stack.pop().obj.asObjString();
 
-        const chars = obj.ObjString.allocateString(try std.mem.concat(gpa.allocator(), u8, &.{ str_a.chars, str_b.chars }));
+        const chars = obj.ObjString.allocateString(try std.mem.concat(gpa.allocator(), u8, &.{ str_a.chars, str_b.chars }), self);
         try self.stack.append(Value{ .obj = &chars.obj });
     }
 
