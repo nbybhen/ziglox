@@ -24,13 +24,15 @@ pub const VM = struct {
     ip: [*]u8,
     stack: std.ArrayList(Value),
     objects: ?*obj.Obj,
+    strings: std.AutoHashMap(*obj.ObjString, Value),
 
     pub fn init() VM {
-        return VM{
+        return VM {
             .chunk = Chunk.init(),
             .ip = undefined,
             .stack = std.ArrayList(Value).init(allocator),
             .objects = null,
+            .strings = std.AutoHashMap(*obj.ObjString, Value).init(allocator),
         };
     }
 
@@ -167,7 +169,7 @@ pub const VM = struct {
         const str_b = self.stack.pop().obj.asObjString();
         const str_a = self.stack.pop().obj.asObjString();
 
-        const chars = obj.ObjString.allocateString(try std.mem.concat(gpa.allocator(), u8, &.{ str_a.chars, str_b.chars }), self);
+        const chars = obj.ObjString.allocateString(try std.mem.concat(gpa.allocator(), u8, &.{ str_a.chars, str_b.chars }), self, 0);
         try self.stack.append(Value{ .obj = &chars.obj });
     }
 
